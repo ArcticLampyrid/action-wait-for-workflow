@@ -1,16 +1,55 @@
 import * as core from '@actions/core'
-import {wait} from './wait'
+import * as github from '@actions/github'
+import { wait } from './wait'
 
 async function run(): Promise<void> {
   try {
-    const ms: string = core.getInput('milliseconds')
-    core.debug(`Waiting ${ms} milliseconds ...`) // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+    const token = core.getInput("github_token", { required: true })
+    const workflow = core.getInput("workflow", { required: true })
+    const [owner, repo] = core.getInput("repo", { required: true }).split("/")
+    const waitInterval = Math.max(parseInt(core.getInput("wait-interval", { required: true }), 10), 5)
+    const sha = core.getInput("sha")
+    const branch = core.getInput("branch")
+    const event = core.getInput("event")
+    const allowedConclusions = core.getMultilineInput("allowed-conclusions", { required: true })
 
-    core.debug(new Date().toTimeString())
-    await wait(parseInt(ms, 10))
-    core.debug(new Date().toTimeString())
-
-    core.setOutput('time', new Date().toTimeString())
+    const client = github.getOctokit(token)
+    let params = {
+      owner: owner,
+      repo: repo,
+      workflow_id: workflow,
+      head_sha: sha || undefined,
+      branch: branch || undefined,
+      event: event || undefined
+    }
+    let first = true;
+    while (true) {
+      let completed = false;
+      for await (const runs of client.paginate.iterator(client.rest.actions.listWorkflowRuns, params)) {
+        for (const run of runs.data) {
+          if (first) {
+            core.setOutput("run-id", run.id);
+            first = false;
+          }
+          if (run.status != "completed") {
+            completed = false;
+          } else {
+            if (!run.conclusion) {
+              core.setFailed("Run#" + run.id.toString() + " is completed without conclusion")
+              return;
+            }
+            if (!allowedConclusions.includes(run.conclusion)) {
+              core.setFailed("Run#" + run.id.toString() + " is completed with disallowed conclusion: " + run.conclusion)
+              return;
+            }
+          }
+        }
+      }
+      if (completed) {
+        break;
+      }
+      await wait(waitInterval * 1000);
+    }
   } catch (error) {
     if (error instanceof Error) core.setFailed(error.message)
   }
