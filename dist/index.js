@@ -72,7 +72,7 @@ function run() {
             };
             let first = true;
             while (true) {
-                let completed = false;
+                let completed = true;
                 try {
                     for (var _b = (e_1 = void 0, __asyncValues(client.paginate.iterator(client.rest.actions.listWorkflowRuns, params))), _c; _c = yield _b.next(), !_c.done;) {
                         const runs = _c.value;

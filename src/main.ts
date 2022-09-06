@@ -24,7 +24,7 @@ async function run(): Promise<void> {
     }
     let first = true;
     while (true) {
-      let completed = false;
+      let completed = true;
       for await (const runs of client.paginate.iterator(client.rest.actions.listWorkflowRuns, params)) {
         for (const run of runs.data) {
           if (first) {
