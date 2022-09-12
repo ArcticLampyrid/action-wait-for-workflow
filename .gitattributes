@@ -1,1 +1,14 @@
 dist/** -diff linguist-generated=true 
+* text=auto
+* eol=lf
+*.bmp binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.exe binary
+*.dll binary
+*.bin binary
+*.jar binary
+*.zip binary
+*.7z binary

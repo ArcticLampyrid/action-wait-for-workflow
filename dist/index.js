@@ -49,48 +49,50 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const wait_1 = __nccwpck_require__(5817);
-function run() {
+function main() {
     var e_1, _a;
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const token = core.getInput("github_token", { required: true });
-            const workflow = core.getInput("workflow", { required: true });
-            const [owner, repo] = core.getInput("repo", { required: true }).split("/");
-            const waitInterval = Math.max(parseInt(core.getInput("wait-interval", { required: true }), 10), 5);
-            const sha = core.getInput("sha");
-            const branch = core.getInput("branch");
-            const event = core.getInput("event");
-            const allowedConclusions = core.getMultilineInput("allowed-conclusions", { required: true });
+            const token = core.getInput('github_token', { required: true });
+            const workflow = core.getInput('workflow', { required: true });
+            const [owner, repo] = core.getInput('repo', { required: true }).split('/');
+            const waitInterval = Math.max(parseInt(core.getInput('wait-interval', { required: true }), 10), 5);
+            const sha = core.getInput('sha');
+            const branch = core.getInput('branch');
+            const event = core.getInput('event');
+            const allowedConclusions = core.getMultilineInput('allowed-conclusions', {
+                required: true
+            });
             const client = github.getOctokit(token);
-            let params = {
-                owner: owner,
-                repo: repo,
+            const params = {
+                owner,
+                repo,
                 workflow_id: workflow,
                 head_sha: sha || undefined,
                 branch: branch || undefined,
                 event: event || undefined
             };
             let first = true;
-            while (true) {
+            for (;;) {
                 let completed = true;
                 try {
                     for (var _b = (e_1 = void 0, __asyncValues(client.paginate.iterator(client.rest.actions.listWorkflowRuns, params))), _c; _c = yield _b.next(), !_c.done;) {
                         const runs = _c.value;
                         for (const run of runs.data) {
                             if (first) {
-                                core.setOutput("run-id", run.id);
+                                core.setOutput('run-id', run.id);
                                 first = false;
                             }
-                            if (run.status != "completed") {
+                            if (run.status !== 'completed') {
                                 completed = false;
                             }
                             else {
                                 if (!run.conclusion) {
-                                    core.setFailed("Run#" + run.id.toString() + " is completed without conclusion");
+                                    core.setFailed(`Run#${run.id.toString()} is completed without conclusion`);
                                     return;
                                 }
                                 if (!allowedConclusions.includes(run.conclusion)) {
-                                    core.setFailed("Run#" + run.id.toString() + " is completed with disallowed conclusion: " + run.conclusion);
+                                    core.setFailed(`Run#${run.id.toString()} is completed with disallowed conclusion: ${run.conclusion}`);
                                     return;
                                 }
                             }
@@ -116,7 +118,7 @@ function run() {
         }
     });
 }
-run();
+main();
 
 
 /***/ }),
