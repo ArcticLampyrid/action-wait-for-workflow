@@ -1,0 +1,32 @@
+# Inspired from https://github.com/KengoTODA/typescript-action/blob/4bb9dcd436f7219d7df2a6ebcce5e85d17bd7ac9/.github/workflows/update-dist.yml
+name: sync the dist dir with dependabot
+on:
+  pull_request_target:
+    types:
+      - labeled # for initial execution
+      - synchronize # to support `@dependabot recreate` command
+jobs:
+  run-ncc:
+    runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ github.token }} # Replace github.token with PAT (personal access token) if you need to trigger a new workflow. https://git.io/JcHD9
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+      - name: Update the dist directory
+        run: |
+          npm ci
+          npm run build
+          npm run package
+          if [[ $(git status -s -- dist | wc -l) -gt 0 ]]; then
+            git add dist
+            git config --local user.email "action@github.com"
+            git config --local user.name "GitHub Action"
+            git commit -m "chore: sync the dist dir with dependabot"
+            git push origin HEAD
+          fi
