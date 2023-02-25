@@ -50,7 +50,7 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const wait_1 = __nccwpck_require__(5817);
 function main() {
-    var e_1, _a;
+    var _a, e_1, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const token = core.getInput('github_token', { required: true });
@@ -76,33 +76,40 @@ function main() {
             for (;;) {
                 let completed = true;
                 try {
-                    for (var _b = (e_1 = void 0, __asyncValues(client.paginate.iterator(client.rest.actions.listWorkflowRuns, params))), _c; _c = yield _b.next(), !_c.done;) {
-                        const runs = _c.value;
-                        for (const run of runs.data) {
-                            if (first) {
-                                core.setOutput('run-id', run.id);
-                                first = false;
-                            }
-                            if (run.status !== 'completed') {
-                                completed = false;
-                            }
-                            else {
-                                if (!run.conclusion) {
-                                    core.setFailed(`Run#${run.id.toString()} is completed without conclusion`);
-                                    return;
+                    for (var _d = true, _e = (e_1 = void 0, __asyncValues(client.paginate.iterator(client.rest.actions.listWorkflowRuns, params))), _f; _f = yield _e.next(), _a = _f.done, !_a;) {
+                        _c = _f.value;
+                        _d = false;
+                        try {
+                            const runs = _c;
+                            for (const run of runs.data) {
+                                if (first) {
+                                    core.setOutput('run-id', run.id);
+                                    first = false;
                                 }
-                                if (!allowedConclusions.includes(run.conclusion)) {
-                                    core.setFailed(`Run#${run.id.toString()} is completed with disallowed conclusion: ${run.conclusion}`);
-                                    return;
+                                if (run.status !== 'completed') {
+                                    completed = false;
+                                }
+                                else {
+                                    if (!run.conclusion) {
+                                        core.setFailed(`Run#${run.id.toString()} is completed without conclusion`);
+                                        return;
+                                    }
+                                    if (!allowedConclusions.includes(run.conclusion)) {
+                                        core.setFailed(`Run#${run.id.toString()} is completed with disallowed conclusion: ${run.conclusion}`);
+                                        return;
+                                    }
                                 }
                             }
+                        }
+                        finally {
+                            _d = true;
                         }
                     }
                 }
                 catch (e_1_1) { e_1 = { error: e_1_1 }; }
                 finally {
                     try {
-                        if (_c && !_c.done && (_a = _b.return)) yield _a.call(_b);
+                        if (!_d && !_a && (_b = _e.return)) yield _b.call(_e);
                     }
                     finally { if (e_1) throw e_1.error; }
                 }
