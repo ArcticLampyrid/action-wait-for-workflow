@@ -76,33 +76,28 @@ function main() {
             for (;;) {
                 let completed = true;
                 try {
-                    for (var _d = true, _e = (e_1 = void 0, __asyncValues(client.paginate.iterator(client.rest.actions.listWorkflowRuns, params))), _f; _f = yield _e.next(), _a = _f.done, !_a;) {
+                    for (var _d = true, _e = (e_1 = void 0, __asyncValues(client.paginate.iterator(client.rest.actions.listWorkflowRuns, params))), _f; _f = yield _e.next(), _a = _f.done, !_a; _d = true) {
                         _c = _f.value;
                         _d = false;
-                        try {
-                            const runs = _c;
-                            for (const run of runs.data) {
-                                if (first) {
-                                    core.setOutput('run-id', run.id);
-                                    first = false;
+                        const runs = _c;
+                        for (const run of runs.data) {
+                            if (first) {
+                                core.setOutput('run-id', run.id);
+                                first = false;
+                            }
+                            if (run.status !== 'completed') {
+                                completed = false;
+                            }
+                            else {
+                                if (!run.conclusion) {
+                                    core.setFailed(`Run#${run.id.toString()} is completed without conclusion`);
+                                    return;
                                 }
-                                if (run.status !== 'completed') {
-                                    completed = false;
-                                }
-                                else {
-                                    if (!run.conclusion) {
-                                        core.setFailed(`Run#${run.id.toString()} is completed without conclusion`);
-                                        return;
-                                    }
-                                    if (!allowedConclusions.includes(run.conclusion)) {
-                                        core.setFailed(`Run#${run.id.toString()} is completed with disallowed conclusion: ${run.conclusion}`);
-                                        return;
-                                    }
+                                if (!allowedConclusions.includes(run.conclusion)) {
+                                    core.setFailed(`Run#${run.id.toString()} is completed with disallowed conclusion: ${run.conclusion}`);
+                                    return;
                                 }
                             }
-                        }
-                        finally {
-                            _d = true;
                         }
                     }
                 }
