@@ -19,6 +19,7 @@ inputs:
   sha:
     description: Commit sha
     required: false
+    default: 'auto'
   branch:
     description: Branch name
     required: false

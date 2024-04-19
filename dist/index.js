@@ -52,12 +52,23 @@ const wait_1 = __nccwpck_require__(5817);
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         var _a, e_1, _b, _c;
+        var _d, _e;
         try {
             const token = core.getInput('github_token', { required: true });
             const workflow = core.getInput('workflow', { required: true });
             const [owner, repo] = core.getInput('repo', { required: true }).split('/');
             const waitInterval = Math.max(parseInt(core.getInput('wait-interval', { required: true }), 10), 5);
-            const sha = core.getInput('sha');
+            let sha = core.getInput('sha');
+            if (sha === 'auto') {
+                const pr_head_sha = (_e = (_d = github.context.payload.pull_request) === null || _d === void 0 ? void 0 : _d.head) === null || _e === void 0 ? void 0 : _e.sha;
+                if (typeof pr_head_sha === 'string' && pr_head_sha.length > 0) {
+                    sha = pr_head_sha;
+                }
+                else {
+                    sha = github.context.sha;
+                }
+                core.info(`Auto detected sha: ${sha}`);
+            }
             const branch = core.getInput('branch');
             const event = core.getInput('event');
             const allowedConclusions = core.getMultilineInput('allowed-conclusions', {
@@ -74,9 +85,9 @@ function main() {
             };
             for (;;) {
                 try {
-                    for (var _d = true, _e = (e_1 = void 0, __asyncValues(client.paginate.iterator(client.rest.actions.listWorkflowRuns, params))), _f; _f = yield _e.next(), _a = _f.done, !_a; _d = true) {
-                        _c = _f.value;
-                        _d = false;
+                    for (var _f = true, _g = (e_1 = void 0, __asyncValues(client.paginate.iterator(client.rest.actions.listWorkflowRuns, params))), _h; _h = yield _g.next(), _a = _h.done, !_a; _f = true) {
+                        _c = _h.value;
+                        _f = false;
                         const runs = _c;
                         for (const run of runs.data) {
                             if (run.status === 'completed') {
@@ -102,7 +113,7 @@ function main() {
                 catch (e_1_1) { e_1 = { error: e_1_1 }; }
                 finally {
                     try {
-                        if (!_d && !_a && (_b = _e.return)) yield _b.call(_e);
+                        if (!_f && !_a && (_b = _g.return)) yield _b.call(_g);
                     }
                     finally { if (e_1) throw e_1.error; }
                 }

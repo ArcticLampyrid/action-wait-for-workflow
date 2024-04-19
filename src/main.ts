@@ -11,7 +11,16 @@ async function main(): Promise<void> {
             parseInt(core.getInput('wait-interval', {required: true}), 10),
             5
         )
-        const sha = core.getInput('sha')
+        let sha = core.getInput('sha')
+        if (sha === 'auto') {
+            const pr_head_sha = github.context.payload.pull_request?.head?.sha
+            if (typeof pr_head_sha === 'string' && pr_head_sha.length > 0) {
+                sha = pr_head_sha
+            } else {
+                sha = github.context.sha
+            }
+            core.info(`Auto detected sha: ${sha}`)
+        }
         const branch = core.getInput('branch')
         const event = core.getInput('event')
         const allowedConclusions = core.getMultilineInput(
