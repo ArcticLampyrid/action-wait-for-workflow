@@ -85,6 +85,7 @@ function main() {
                                     core.setFailed(`Run#${run.id.toString()} is completed without conclusion`);
                                     return;
                                 }
+                                core.setOutput('run-conclusion', run.conclusion);
                                 if (!allowedConclusions.includes(run.conclusion)) {
                                     core.setFailed(`Run#${run.id.toString()} is completed with disallowed conclusion: ${run.conclusion}`);
                                     return;

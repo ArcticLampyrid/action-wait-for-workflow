@@ -44,6 +44,7 @@ async function main(): Promise<void> {
                             )
                             return
                         }
+                        core.setOutput('run-conclusion', run.conclusion)
                         if (!allowedConclusions.includes(run.conclusion)) {
                             core.setFailed(
                                 `Run#${run.id.toString()} is completed with disallowed conclusion: ${
