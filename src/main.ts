@@ -56,6 +56,7 @@ async function main(): Promise<void> {
                         core.info(
                             `Run#${run.id.toString()} is completed with conclusion: ${run.conclusion}`
                         )
+                        return
                     }
                 }
                 if (runs.data.length === 0) {
