@@ -96,7 +96,6 @@ function main() {
                         }
                         if (runs.data.length === 0) {
                             core.info('No runs found in this check round, waiting for next round...');
-                            break;
                         }
                     }
                 }

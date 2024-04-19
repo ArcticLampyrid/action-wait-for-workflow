@@ -63,7 +63,6 @@ async function main(): Promise<void> {
                     core.info(
                         'No runs found in this check round, waiting for next round...'
                     )
-                    break
                 }
             }
             await wait(waitInterval * 1000)
