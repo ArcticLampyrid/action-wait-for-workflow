@@ -72,23 +72,15 @@ function main() {
                 branch: branch || undefined,
                 event: event || undefined
             };
-            let first = true;
             for (;;) {
-                let completed = true;
                 try {
                     for (var _d = true, _e = (e_1 = void 0, __asyncValues(client.paginate.iterator(client.rest.actions.listWorkflowRuns, params))), _f; _f = yield _e.next(), _a = _f.done, !_a; _d = true) {
                         _c = _f.value;
                         _d = false;
                         const runs = _c;
                         for (const run of runs.data) {
-                            if (first) {
+                            if (run.status === 'completed') {
                                 core.setOutput('run-id', run.id);
-                                first = false;
-                            }
-                            if (run.status !== 'completed') {
-                                completed = false;
-                            }
-                            else {
                                 if (!run.conclusion) {
                                     core.setFailed(`Run#${run.id.toString()} is completed without conclusion`);
                                     return;
@@ -97,7 +89,12 @@ function main() {
                                     core.setFailed(`Run#${run.id.toString()} is completed with disallowed conclusion: ${run.conclusion}`);
                                     return;
                                 }
+                                core.info(`Run#${run.id.toString()} is completed with conclusion: ${run.conclusion}`);
                             }
+                        }
+                        if (runs.data.length === 0) {
+                            core.info('No runs found in this check round, waiting for next round...');
+                            break;
                         }
                     }
                 }
@@ -107,9 +104,6 @@ function main() {
                         if (!_d && !_a && (_b = _e.return)) yield _b.call(_e);
                     }
                     finally { if (e_1) throw e_1.error; }
-                }
-                if (completed) {
-                    break;
                 }
                 yield (0, wait_1.wait)(waitInterval * 1000);
             }

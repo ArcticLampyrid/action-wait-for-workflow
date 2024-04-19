@@ -30,21 +30,14 @@ async function main(): Promise<void> {
             branch: branch || undefined,
             event: event || undefined
         }
-        let first = true
         for (;;) {
-            let completed = true
             for await (const runs of client.paginate.iterator(
                 client.rest.actions.listWorkflowRuns,
                 params
             )) {
                 for (const run of runs.data) {
-                    if (first) {
+                    if (run.status === 'completed') {
                         core.setOutput('run-id', run.id)
-                        first = false
-                    }
-                    if (run.status !== 'completed') {
-                        completed = false
-                    } else {
                         if (!run.conclusion) {
                             core.setFailed(
                                 `Run#${run.id.toString()} is completed without conclusion`
@@ -59,11 +52,17 @@ async function main(): Promise<void> {
                             )
                             return
                         }
+                        core.info(
+                            `Run#${run.id.toString()} is completed with conclusion: ${run.conclusion}`
+                        )
                     }
                 }
-            }
-            if (completed) {
-                break
+                if (runs.data.length === 0) {
+                    core.info(
+                        'No runs found in this check round, waiting for next round...'
+                    )
+                    break
+                }
             }
             await wait(waitInterval * 1000)
         }
