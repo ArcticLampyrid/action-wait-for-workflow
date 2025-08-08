@@ -93,6 +93,7 @@ function main() {
                 branch: branch || undefined,
                 event: event || undefined
             };
+            const seenRunIds = new Set();
             for (;;) {
                 try {
                     for (var _f = true, _g = (e_1 = void 0, __asyncValues(client.paginate.iterator(client.rest.actions.listWorkflowRuns, params))), _h; _h = yield _g.next(), _a = _h.done, !_a; _f = true) {
@@ -100,6 +101,10 @@ function main() {
                         _f = false;
                         const runs = _c;
                         for (const run of runs.data) {
+                            if (!seenRunIds.has(run.id)) {
+                                seenRunIds.add(run.id);
+                                core.info(`Run#${run.id} that meets the filter is found`);
+                            }
                             if (run.status === 'completed') {
                                 core.setOutput('run-id', run.id);
                                 if (!run.conclusion) {

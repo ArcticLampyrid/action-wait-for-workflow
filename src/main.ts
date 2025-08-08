@@ -39,12 +39,19 @@ async function main(): Promise<void> {
             branch: branch || undefined,
             event: event || undefined
         }
+        const seenRunIds = new Set<number>()
         for (;;) {
             for await (const runs of client.paginate.iterator(
                 client.rest.actions.listWorkflowRuns,
                 params
             )) {
                 for (const run of runs.data) {
+                    if (!seenRunIds.has(run.id)) {
+                        seenRunIds.add(run.id)
+                        core.info(
+                            `Run#${run.id} that meets the filter is found`
+                        )
+                    }
                     if (run.status === 'completed') {
                         core.setOutput('run-id', run.id)
                         if (!run.conclusion) {
