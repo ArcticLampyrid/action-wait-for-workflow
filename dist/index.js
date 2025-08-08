@@ -62,7 +62,7 @@ const wait_1 = __nccwpck_require__(6339);
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         var _a, e_1, _b, _c;
-        var _d, _e;
+        var _d, _e, _f, _g, _h, _j;
         try {
             const token = core.getInput('github_token', { required: true });
             const workflow = core.getInput('workflow', { required: true });
@@ -96,41 +96,65 @@ function main() {
             const seenRunIds = new Set();
             for (;;) {
                 try {
-                    for (var _f = true, _g = (e_1 = void 0, __asyncValues(client.paginate.iterator(client.rest.actions.listWorkflowRuns, params))), _h; _h = yield _g.next(), _a = _h.done, !_a; _f = true) {
-                        _c = _h.value;
-                        _f = false;
-                        const runs = _c;
-                        for (const run of runs.data) {
-                            if (!seenRunIds.has(run.id)) {
-                                seenRunIds.add(run.id);
-                                core.info(`Run#${run.id} that meets the filter is found`);
-                            }
-                            if (run.status === 'completed') {
-                                core.setOutput('run-id', run.id);
-                                if (!run.conclusion) {
-                                    core.setFailed(`Run#${run.id.toString()} is completed without conclusion`);
+                    try {
+                        for (var _k = true, _l = (e_1 = void 0, __asyncValues(client.paginate.iterator(client.rest.actions.listWorkflowRuns, params))), _m; _m = yield _l.next(), _a = _m.done, !_a; _k = true) {
+                            _c = _m.value;
+                            _k = false;
+                            const runs = _c;
+                            for (const run of runs.data) {
+                                if (!seenRunIds.has(run.id)) {
+                                    seenRunIds.add(run.id);
+                                    core.info(`Run#${run.id} that meets the filter is found`);
+                                }
+                                if (run.status === 'completed') {
+                                    core.setOutput('run-id', run.id);
+                                    if (!run.conclusion) {
+                                        core.setFailed(`Run#${run.id.toString()} is completed without conclusion`);
+                                        return;
+                                    }
+                                    core.setOutput('run-conclusion', run.conclusion);
+                                    if (!allowedConclusions.includes(run.conclusion)) {
+                                        core.setFailed(`Run#${run.id.toString()} is completed with disallowed conclusion: ${run.conclusion}`);
+                                        return;
+                                    }
+                                    core.info(`Run#${run.id.toString()} is completed with conclusion: ${run.conclusion}`);
                                     return;
                                 }
-                                core.setOutput('run-conclusion', run.conclusion);
-                                if (!allowedConclusions.includes(run.conclusion)) {
-                                    core.setFailed(`Run#${run.id.toString()} is completed with disallowed conclusion: ${run.conclusion}`);
-                                    return;
-                                }
-                                core.info(`Run#${run.id.toString()} is completed with conclusion: ${run.conclusion}`);
-                                return;
+                            }
+                            if (runs.data.length === 0) {
+                                core.info('No runs found in this check round, waiting for next round...');
                             }
                         }
-                        if (runs.data.length === 0) {
-                            core.info('No runs found in this check round, waiting for next round...');
+                    }
+                    catch (e_1_1) { e_1 = { error: e_1_1 }; }
+                    finally {
+                        try {
+                            if (!_k && !_a && (_b = _l.return)) yield _b.call(_l);
                         }
+                        finally { if (e_1) throw e_1.error; }
                     }
                 }
-                catch (e_1_1) { e_1 = { error: e_1_1 }; }
-                finally {
-                    try {
-                        if (!_f && !_a && (_b = _g.return)) yield _b.call(_g);
+                catch (e) {
+                    const err = e; // eslint-disable-line @typescript-eslint/no-explicit-any
+                    const status = (_g = (_f = err === null || err === void 0 ? void 0 : err.response) === null || _f === void 0 ? void 0 : _f.status) !== null && _g !== void 0 ? _g : err === null || err === void 0 ? void 0 : err.status;
+                    const headers = (_j = (_h = err === null || err === void 0 ? void 0 : err.response) === null || _h === void 0 ? void 0 : _h.headers) !== null && _j !== void 0 ? _j : err === null || err === void 0 ? void 0 : err.headers;
+                    if ((status === 403 || status === 429) &&
+                        (headers === null || headers === void 0 ? void 0 : headers['x-ratelimit-remaining']) === '0') {
+                        // Handle GitHub API rate limiting
+                        const resetTimestamp = Number(headers === null || headers === void 0 ? void 0 : headers['x-ratelimit-reset']);
+                        const nowTimestamp = Math.floor(Date.now() / 1000);
+                        let waitSec = waitInterval;
+                        if (Number.isFinite(resetTimestamp)) {
+                            waitSec = resetTimestamp - nowTimestamp + 1;
+                            if (waitSec < waitInterval)
+                                waitSec = waitInterval;
+                        }
+                        core.info(`API rate limit reached. Waiting ${waitSec} seconds...`);
+                        yield (0, wait_1.wait)(waitSec * 1000);
+                        continue;
                     }
-                    finally { if (e_1) throw e_1.error; }
+                    // rethrow if not a handled error
+                    throw e;
                 }
                 yield (0, wait_1.wait)(waitInterval * 1000);
             }
